@@ -26,9 +26,14 @@ RainDays: Average number of days with precipitation per year
 */
 
 
+
+* change this to match your preferred location;
+%let path=/folders/myfolders/Linear Models/Project;
+
+
 * change these to match your computer HDD;
-FILENAME REFFILE '/folders/myfolders/Linear Models/Project/projdata3.txt';
-libname p1folder '/folders/myfolders/Linear Models/Project';
+FILENAME REFFILE "&path/projdata3.txt";
+libname p1folder "&path";
 
 
 
@@ -45,18 +50,18 @@ RUN;
 
 * prelim checks;
 
-proc contents;
-proc print;
-proc means;
-proc corr;
-proc univariate;
+proc contents data=p1folder.p1data;
+proc print data=p1folder.p1data;
+proc means data=p1folder.p1data;
+proc corr data=p1folder.p1data;
+proc univariate data=p1folder.p1data;
 	hist;
 	qqplot;
 	id city;
 run;
 
 * full model regression with full data and without transformations;
-proc reg;
+proc reg data=p1folder.p1data;
 	model so2 = Temp Man Pop Wind Rain RainDays;
 run;
 	
