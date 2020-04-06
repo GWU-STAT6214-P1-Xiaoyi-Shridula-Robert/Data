@@ -1,4 +1,4 @@
-
+options symbolgen;
 /*
 Story Name: Air Pollution Data 
 
@@ -25,16 +25,11 @@ Rain: Average annual precipitation in inches
 RainDays: Average number of days with precipitation per year 
 */
 
-
-
-* change this to match your preferred location;
 %let path=/folders/myfolders/Linear Models/Project;
-
 
 * change these to match your computer HDD;
 FILENAME REFFILE "&path/projdata3.txt";
 libname p1folder "&path";
-
 
 
 * Import Data;
@@ -48,11 +43,12 @@ RUN;
 
 
 
+title "Without Transformation";
 * prelim checks;
 
 proc contents data=p1folder.p1data;
 proc print data=p1folder.p1data;
-proc means data=p1folder.p1data;
+proc means data=p1folder.p1data q1 median q3 mean clm alpha=0.05;
 proc corr data=p1folder.p1data;
 proc univariate data=p1folder.p1data;
 	hist;
@@ -61,10 +57,56 @@ proc univariate data=p1folder.p1data;
 run;
 
 * full model regression with full data and without transformations;
-proc reg data=p1folder.p1data;
-	model so2 = Temp Man Pop Wind Rain RainDays;
+proc reg data=p1folder.p1data
+	plots(label)=(CooksD RStudentByLeverage);
+	model so2 = Temp Man Pop Wind Rain RainDays / selection=backward;
+	id city;
 run;
 	
+
+
+
+
+/*
+Data transformed to normalize
+*/
+
+title "Transformed Data";
+* consider transforms; 
+data p1folder.p1dataTrans;
+	set p1folder.p1data;
+	logSO2 = log(SO2);
+	logMan = log(Man);
+	logPop = log(pop);
+	logTemp = log(temp);
+	RainSq = rain*rain;
+	manpercap=man/pop;
+	logMpC = log(manpercap);
+run;
+
+
+ 
+* Transformed data; 
+
+proc corr data=p1folder.p1datatrans;
+	var logSo2 logTemp logman logpop Wind RainSq RainDays;
+run;
+
+  
+proc univariate data=p1folder.p1datatrans normaltest alpha=0.05;
+	hist;
+	qqplot;
+	id city;
+	probplot;
+run;
+
+
+proc reg data=p1folder.p1datatrans
+	plots(label)=(CooksD RStudentByLeverage);
+	model logso2 = logTemp logman logpop Wind RainSq RainDays / selection=backward;
+	id city;
+	*where city ~="Chicago";
+run;
 
 
 
